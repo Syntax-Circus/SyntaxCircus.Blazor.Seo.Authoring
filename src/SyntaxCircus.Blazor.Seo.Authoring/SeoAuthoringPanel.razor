@@ -1,0 +1,74 @@
+<section class="seo-panel" data-seo-authoring aria-label="Search and writing">
+    <h2>Search &amp; writing</h2>
+    <p>Suggestions are here to help. You can save and publish when you are ready.</p>
+    <button type="button" @onclick="CheckAgain" disabled="@(!CanCheck)">Check again</button>
+    @if (View is { } view)
+    {
+        <p role="status" data-seo-status>@view.Status</p>
+        <h3>How this page may look in search</h3>
+        <div class="seo-snippet">
+            <strong>@view.Snippet.Title</strong>
+            <small>@(view.Snippet.Address ?? "Address not available · set a public address to preview it here.")</small>
+            <p>@view.Snippet.Description</p>
+        </div>
+        <p><small>Search engines may choose different wording.</small></p>
+        <h3>Things to review</h3>
+        <h4>Search and page structure</h4>
+        @if (view.Search.Length == 0)
+        {
+            <p>@(view.Outdated ? "Check the current draft for updated suggestions." : "No changes suggested by these basic checks.")</p>
+        }
+        <ul>
+            @foreach (var item in SearchItems)
+            {
+                <li>
+                    <strong>@item.Message</strong>
+                    <p>@item.Recommendation</p>
+                    @if (item.Target is { } target)
+                    {
+                        <button type="button" @onclick="() => EditTarget(target)">Edit this</button>
+                    }
+                </li>
+            }
+        </ul>
+        @if (!_showSearch && view.Search.Length > InitialCount)
+        {
+            <button type="button" @onclick="ShowMoreSearch">Show more search suggestions</button>
+        }
+        <h4>Writing</h4>
+        @if (view.ExtraPending)
+        {
+            <p>Extra writing checks are running…</p>
+        }
+        <ul>
+            @foreach (var item in WritingItems)
+            {
+                <li>
+                    <strong>@item.Message</strong>
+                    <p>@item.Recommendation</p>
+                    @if (item.Target is { } target)
+                    {
+                        <button type="button" @onclick="() => EditTarget(target)">Edit this</button>
+                    }
+                </li>
+            }
+        </ul>
+        @if (!_showWriting && view.Writing.Length > InitialCount)
+        {
+            <button type="button" @onclick="ShowMoreWriting">Show more writing suggestions</button>
+        }
+        <details>
+            <summary>What was checked</summary>
+            <ul>
+                @foreach (var detail in view.Diagnostics)
+                {
+                    <li>@detail</li>
+                }
+            </ul>
+        </details>
+    }
+    else
+    {
+        <p role="status" data-seo-status>Ready to check the current draft.</p>
+    }
+</section>

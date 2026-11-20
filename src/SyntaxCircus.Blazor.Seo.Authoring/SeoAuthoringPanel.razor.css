@@ -1,0 +1,41 @@
+.seo-panel {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding: 22px;
+    margin-block: 18px;
+    border: 1px solid #d8dfeb;
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+}
+
+.seo-panel p {
+    margin-block: 16px;
+}
+
+.seo-panel li {
+    margin-bottom: 18px;
+}
+
+.seo-snippet {
+    border-left: 4px solid #2455b5;
+    background: #f4f7fc;
+    padding: 16px;
+}
+
+.seo-snippet strong,
+.seo-snippet small {
+    display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+    .seo-panel {
+        border-color: #3a4358;
+        background: #1b2230;
+    }
+
+    .seo-snippet {
+        border-left-color: #7da2ee;
+        background: #232c3f;
+    }
+}
