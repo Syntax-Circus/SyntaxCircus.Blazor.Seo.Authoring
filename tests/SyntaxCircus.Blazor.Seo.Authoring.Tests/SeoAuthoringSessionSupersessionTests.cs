@@ -56,6 +56,43 @@ public sealed class SeoAuthoringSessionSupersessionTests
         published.ShouldBe(2);
     }
 
+    [Fact]
+    public async Task Session_ThrowingChangedHandler_DoesNotHangDispose()
+    {
+        var session = new SeoAuthoringSession(TestDrafts.Presentation(null));
+        session.Changed += () => throw new InvalidOperationException("subscriber failed");
+
+        try
+        {
+            await session.CheckAsync(TestDrafts.Draft(), true, Token);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        await session.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5), Token);
+    }
+
+    [Fact]
+    public async Task Session_AfterAThrowingChangedHandler_LaterChecksStillWork()
+    {
+        await using var session = new SeoAuthoringSession(TestDrafts.Presentation(null));
+        Action thrower = () => throw new InvalidOperationException("subscriber failed");
+        session.Changed += thrower;
+        try
+        {
+            await session.CheckAsync(TestDrafts.Draft(), true, Token);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        session.Changed -= thrower;
+        await session.CheckAsync(TestDrafts.Draft(), true, Token).WaitAsync(TimeSpan.FromSeconds(5), Token);
+
+        session.View.ShouldNotBeNull();
+    }
+
     private sealed class CountingAnalyzer : IContentSeoAnalyzer
     {
         private readonly ContentSeoAnalyzer _inner = new();

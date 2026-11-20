@@ -36,7 +36,25 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
         }
 
         Cancel(old);
-        Changed?.Invoke();
+        try
+        {
+            Changed?.Invoke();
+        }
+        catch
+        {
+            // The run never starts: release the registration so DisposeAsync does not wait on it.
+            lock (_gate)
+            {
+                if (ReferenceEquals(_pending, source))
+                {
+                    _pending = null;
+                }
+            }
+
+            source.Dispose();
+            completion.TrySetResult();
+            throw;
+        }
 
         // Started outside the gate so presentation.Prepare and Changed handlers never run while it is held.
         var work = RunAsync(draft, immediate, generation, source);
@@ -161,8 +179,8 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
             _disposed = true;
         }
 
+        Changed = null; // no notifications during disposal, so a faulty subscriber cannot break it
         Invalidate(true);
-        Changed = null;
         Task work;
         lock (_gate)
         {
