@@ -20,24 +20,27 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
 
     public Task CheckAsync(SeoAuthoringDraft draft, bool immediate, CancellationToken token)
     {
-        Invalidate(false);
+        CancellationTokenSource? old;
         CancellationTokenSource source;
         long generation;
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        // Supersede the previous check and register this one atomically, so two interleaved calls can never share a generation.
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            old = Supersede(clear: false);
             source = CancellationTokenSource.CreateLinkedTokenSource(token);
             _pending = source;
             generation = _generation;
+            _work = completion.Task;
         }
+
+        Cancel(old);
+        Changed?.Invoke();
 
         // Started outside the gate so presentation.Prepare and Changed handlers never run while it is held.
         var work = RunAsync(draft, immediate, generation, source);
-        lock (_gate)
-        {
-            _work = work;
-        }
-
+        _ = work.ContinueWith(_ => completion.TrySetResult(), TaskScheduler.Default);
         return work;
     }
 
@@ -46,25 +49,36 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
         CancellationTokenSource? old;
         lock (_gate)
         {
-            ++_generation;
-            old = _pending;
-            _pending = null;
-            View = clear
-                ? null
-                : View is { } view
-                    ? view with { Outdated = true, ExtraPending = false, Status = "Draft changed. These results are outdated." }
-                    : null;
+            old = Supersede(clear);
         }
 
+        Cancel(old);
+        Changed?.Invoke();
+    }
+
+    // Caller holds _gate. Bumps the generation so in-flight results are rejected, and returns the source to cancel.
+    private CancellationTokenSource? Supersede(bool clear)
+    {
+        ++_generation;
+        var old = _pending;
+        _pending = null;
+        View = clear
+            ? null
+            : View is { } view
+                ? view with { Outdated = true, ExtraPending = false, Status = "Draft changed. These results are outdated." }
+                : null;
+        return old;
+    }
+
+    private static void Cancel(CancellationTokenSource? source)
+    {
         try
         {
-            old?.Cancel();
+            source?.Cancel();
         }
         catch (ObjectDisposedException)
         {
         }
-
-        Changed?.Invoke();
     }
 
     private async Task RunAsync(SeoAuthoringDraft draft, bool immediate, long generation, CancellationTokenSource source)
@@ -81,8 +95,10 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
 
                 token.ThrowIfCancellationRequested();
                 var prepared = await presentation.PrepareAsync(draft, token);
-                Publish(await presentation.BaselineAsync(prepared, token).WaitAsync(token));
-                if (prepared.Snapshot is not null)
+                var baseline = await presentation.BaselineAsync(prepared, token).WaitAsync(token);
+                Publish(baseline);
+                // Without a selected companion the baseline is already the final result; a second analysis would repeat it.
+                if (baseline.ExtraPending)
                 {
                     Publish(await presentation.CompleteAsync(prepared, token).WaitAsync(token));
                 }
@@ -147,6 +163,12 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
 
         Invalidate(true);
         Changed = null;
-        await _work;
+        Task work;
+        lock (_gate)
+        {
+            work = _work;
+        }
+
+        await work;
     }
 }
