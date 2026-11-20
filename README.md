@@ -1,5 +1,9 @@
 # SyntaxCircus.Blazor.Seo.Authoring
 
+[![Build](https://github.com/Syntax-Circus/SyntaxCircus.Blazor.Seo.Authoring/actions/workflows/build.yml/badge.svg)](https://github.com/Syntax-Circus/SyntaxCircus.Blazor.Seo.Authoring/actions/workflows/build.yml)
+[![NuGet](https://img.shields.io/nuget/v/SyntaxCircus.Blazor.Seo.Authoring.svg)](https://www.nuget.org/packages/SyntaxCircus.Blazor.Seo.Authoring)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Live SEO and readability checks while writing a page, with "edit this" jump targets. Lifted from a production
 site's authoring flow into a reusable package that is independent of any particular CMS model.
 
