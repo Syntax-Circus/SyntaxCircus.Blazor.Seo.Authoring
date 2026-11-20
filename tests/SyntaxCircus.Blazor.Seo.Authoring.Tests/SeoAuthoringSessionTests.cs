@@ -121,6 +121,38 @@ public sealed class SeoAuthoringSessionTests
         session.View.Snippet.Title.ShouldBe("Current title");
     }
 
+    [Fact]
+    public async Task Session_CheckAsync_DoesNotHoldTheGateWhilePreparing()
+    {
+        var presenter = new GateProbePresenter();
+        await using var session = new SeoAuthoringSession(presenter);
+        presenter.Session = session;
+
+        await session.CheckAsync(TestDrafts.Draft(), true, Token);
+
+        presenter.InvalidatedFromAnotherThread.ShouldBeTrue();
+    }
+
+    private sealed class GateProbePresenter : ISeoAuthoringPresentation
+    {
+        public SeoAuthoringSession? Session;
+        public bool InvalidatedFromAnotherThread;
+
+        public Task<SeoPreparedDraft> PrepareAsync(SeoAuthoringDraft draft, CancellationToken token)
+        {
+            // Invalidate takes the session gate; if the caller still held it, this other thread would block.
+            InvalidatedFromAnotherThread = Task.Run(() => Session!.Invalidate(false), CancellationToken.None).Wait(TimeSpan.FromSeconds(2), CancellationToken.None);
+            token.ThrowIfCancellationRequested();
+            return TestDrafts.Presentation(null).PrepareAsync(draft, token);
+        }
+
+        public Task<SeoAuthoringPanelViewModel> BaselineAsync(SeoPreparedDraft draft, CancellationToken token)
+            => Task.FromResult(View("x", "x"));
+
+        public Task<SeoAuthoringPanelViewModel> CompleteAsync(SeoPreparedDraft draft, CancellationToken token)
+            => Task.FromResult(View("x", "x"));
+    }
+
     private static SeoAuthoringPanelViewModel View(string id, string title, bool pending = false)
         => new(id, new SeoSnippetViewModel(title, null, ""), [], [], [], pending ? "Checking" : "Ready", pending, false);
 

@@ -52,6 +52,36 @@ public sealed class SeoAuthoringPresentationTests
     }
 
     [Fact]
+    public async Task Presentation_SnippetAddress_KeepsPercentEncodedPathEncoded()
+    {
+        var draft = TestDrafts.Draft() with { CanonicalUrl = new Uri("https://example.test/a%20b") };
+
+        var prepared = await TestDrafts.Presentation(null).PrepareAsync(draft, Token);
+
+        prepared.Snippet.Address.ShouldBe("https://example.test/a%20b");
+    }
+
+    [Theory]
+    [InlineData("title")]
+    [InlineData("metaDescription")]
+    public async Task Presentation_ReservedKeys_WinOverSectionIdsOfTheSameName(string reserved)
+    {
+        var draft = TestDrafts.Draft() with
+        {
+            MetaDescription = null,
+            BodyHtml = $"<section data-section-id=\"{reserved}\"><h3>Skipped a level</h3></section>",
+        };
+        var service = TestDrafts.Presentation(null);
+
+        var report = await service.BaselineAsync(await service.PrepareAsync(draft, Token), Token);
+
+        // The metadata finding still jumps to the reserved field...
+        report.Search.Where(x => x.Target is { Field: "metaDescription" }).ShouldHaveSingleItem();
+        // ...and a heading problem inside a body section named like a reserved key never jumps to that field.
+        report.Search.Single(x => x.Id == "core.heading-order").Target.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Presentation_MapsPowerSeoAndYoastWritingFindingsToPlainEnglish()
     {
         var power = new Companion();

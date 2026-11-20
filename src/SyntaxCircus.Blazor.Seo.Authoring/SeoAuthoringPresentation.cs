@@ -49,7 +49,7 @@ public sealed class SeoAuthoringPresentation(ISeoDraftDocumentBuilder builder, I
         token.ThrowIfCancellationRequested();
         var searchTitle = DefaultSeoDraftDocumentBuilder.SearchTitle(draft);
         var title = string.IsNullOrWhiteSpace(draft.SiteDisplayName) ? searchTitle : searchTitle + " · " + draft.SiteDisplayName;
-        var snippet = new SeoSnippetViewModel(title, draft.CanonicalUrl.ToString(), draft.MetaDescription ?? "");
+        var snippet = new SeoSnippetViewModel(title, DefaultSeoDraftDocumentBuilder.CanonicalUrlText(draft), draft.MetaDescription ?? "");
         SeoPreparedDraft Unfinished() => new(draft.Identity, null, snippet, draft.Targets,
             "Finish the incomplete text before checking this draft.");
 
@@ -98,7 +98,8 @@ public sealed class SeoAuthoringPresentation(ISeoDraftDocumentBuilder builder, I
             {
                 "metadata.title" => TitleField,
                 "metadata.description" => MetaDescriptionField,
-                _ => finding.SectionId,
+                // Reserved keys belong to the title/description fields; a body section that happens to share one never claims them.
+                _ => finding.SectionId is TitleField or MetaDescriptionField ? null : finding.SectionId,
             };
             SeoEditTarget? target = targetKey is not null && draft.Targets.TryGetValue(targetKey, out var owned) ? owned : null;
             var (message, recommendation) = PlainWritingCopy(finding);

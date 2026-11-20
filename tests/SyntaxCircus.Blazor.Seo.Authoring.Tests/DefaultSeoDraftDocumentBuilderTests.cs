@@ -47,4 +47,12 @@ public sealed class DefaultSeoDraftDocumentBuilderTests
 
         document.ContentHtml.ShouldBe("<H1>Own heading</H1><p>x</p>");
     }
+
+    [Fact]
+    public void DefaultBuilder_KeepsPercentEncodedCanonicalPathEncoded()
+    {
+        var draft = TestDrafts.Draft() with { CanonicalUrl = new Uri("https://example.test/a%20b") };
+
+        _builder.Build(draft).CanonicalUrl.ShouldBe("https://example.test/a%20b");
+    }
 }

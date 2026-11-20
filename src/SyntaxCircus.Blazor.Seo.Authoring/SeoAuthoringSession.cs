@@ -21,13 +21,24 @@ public sealed class SeoAuthoringSession(ISeoAuthoringPresentation presentation, 
     public Task CheckAsync(SeoAuthoringDraft draft, bool immediate, CancellationToken token)
     {
         Invalidate(false);
+        CancellationTokenSource source;
+        long generation;
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            var source = CancellationTokenSource.CreateLinkedTokenSource(token);
+            source = CancellationTokenSource.CreateLinkedTokenSource(token);
             _pending = source;
-            return _work = RunAsync(draft, immediate, _generation, source);
+            generation = _generation;
         }
+
+        // Started outside the gate so presentation.Prepare and Changed handlers never run while it is held.
+        var work = RunAsync(draft, immediate, generation, source);
+        lock (_gate)
+        {
+            _work = work;
+        }
+
+        return work;
     }
 
     public void Invalidate(bool clear)
