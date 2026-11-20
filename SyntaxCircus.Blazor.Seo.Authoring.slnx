@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="GitVersion.yml" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="publish.ps1" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/SyntaxCircus.Blazor.Seo.Authoring/SyntaxCircus.Blazor.Seo.Authoring.csproj" />
+  <Project Path="tests/SyntaxCircus.Blazor.Seo.Authoring.Tests/SyntaxCircus.Blazor.Seo.Authoring.Tests.csproj" />
+</Solution>

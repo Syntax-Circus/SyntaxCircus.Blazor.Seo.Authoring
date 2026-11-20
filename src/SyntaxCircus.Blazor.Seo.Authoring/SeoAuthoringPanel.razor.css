@@ -1,0 +1,35 @@
+/*
+ * Colours come from CSS custom properties with light defaults, so the panel is readable in a light-only admin.
+ * A host that has a dark theme sets the variables on the panel or any ancestor (see the README); there is no
+ * automatic prefers-color-scheme switch.
+ */
+.seo-panel {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding: 22px;
+    margin-block: 18px;
+    border: 1px solid var(--seo-panel-border, #d8dfeb);
+    border-radius: 8px;
+    background: var(--seo-panel-bg, #fff);
+    color: var(--seo-panel-fg, #1d2433);
+}
+
+.seo-panel p {
+    margin-block: 16px;
+}
+
+.seo-panel li {
+    margin-bottom: 18px;
+}
+
+.seo-snippet {
+    border-left: 4px solid var(--seo-snippet-accent, #2455b5);
+    background: var(--seo-snippet-bg, #f4f7fc);
+    color: var(--seo-snippet-fg, var(--seo-panel-fg, #1d2433));
+    padding: 16px;
+}
+
+.seo-snippet strong,
+.seo-snippet small {
+    display: block;
+}
