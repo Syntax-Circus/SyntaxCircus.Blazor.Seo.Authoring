@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>SyntaxCircus.Blazor.Seo.Authoring</PackageId>
+    <Title>SyntaxCircus Blazor SEO Authoring</Title>
+    <Description>Live SEO and readability checks while authoring content, with edit-this jump targets.</Description>
+    <Authors>Syntax Circus LLC</Authors>
+    <Company>Syntax Circus LLC</Company>
+    <Copyright>Copyright © Syntax Circus LLC</Copyright>
+    <PackageTags>blazor;seo;authoring;readability</PackageTags>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/Syntax-Circus/SyntaxCircus.Blazor.Seo.Authoring</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Syntax-Circus/SyntaxCircus.Blazor.Seo.Authoring</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="SyntaxCircus.Seo.Analysis" />
+    <PackageReference Include="SyntaxCircus.Blazor.Seo.Analysis.PowerSeo" />
+    <PackageReference Include="SyntaxCircus.Seo.Analysis.Yoast" />
+    <PackageReference Include="GitVersion.MsBuild" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
