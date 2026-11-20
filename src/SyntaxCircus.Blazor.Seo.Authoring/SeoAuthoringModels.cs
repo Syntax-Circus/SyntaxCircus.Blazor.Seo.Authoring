@@ -13,7 +13,7 @@ public sealed record SeoAuthoringIdentity(string RecordId, long AuthorityGenerat
 /// <c>data-section-id</c> attributes of <paramref name="BodyHtml"/>) for findings located in a section.
 /// </summary>
 public sealed record SeoAuthoringDraft(SeoAuthoringIdentity Identity, string Title, string? SeoTitle, string? MetaDescription,
-    string Slug, Uri CanonicalUrl, string BodyHtml, string Locale, ContentPurpose Purpose, string SiteDisplayName,
+    string Slug, Uri? CanonicalUrl, string BodyHtml, string Locale, ContentPurpose Purpose, string SiteDisplayName,
     bool InputValid, ImmutableDictionary<string, SeoEditTarget> Targets);
 
 public sealed record SeoEditTarget(string Panel, string? SectionId, string Field);

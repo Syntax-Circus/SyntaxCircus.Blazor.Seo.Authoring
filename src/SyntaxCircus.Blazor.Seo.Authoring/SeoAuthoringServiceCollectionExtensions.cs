@@ -47,27 +47,28 @@ public static class SeoAuthoringServiceCollectionExtensions
             p.GetRequiredService<ISeoDraftDocumentBuilder>(), p.GetRequiredService<IContentSeoAnalyzer>(), null,
             async token =>
             {
-                var selected = options.Provider;
-                if (p.GetService<ISeoProviderSelector>() is { } selector)
+                try
                 {
-                    try
+                    var selected = options.Provider;
+                    if (p.GetService<ISeoProviderSelector>() is { } selector)
                     {
                         selected = await selector.SelectAsync(token) ?? SeoAuthoringProvider.CoreOnly;
                     }
-                    catch (Exception error) when (error is not OperationCanceledException)
-                    {
-                        // Basic analysis stays available if the selection source is down; an uncertain
-                        // choice must never send draft text to an external service.
-                        return null;
-                    }
-                }
 
-                return selected switch
+                    return selected switch
+                    {
+                        SeoAuthoringProvider.PowerSeo => p.GetRequiredService<PowerSeoCompanion>(),
+                        SeoAuthoringProvider.Yoast when yoastBaseUrl is not null => p.GetRequiredService<YoastCompanion>(),
+                        _ => (ISeoCompanion?)null,
+                    };
+                }
+                catch (Exception) when (!token.IsCancellationRequested)
                 {
-                    SeoAuthoringProvider.PowerSeo => p.GetRequiredService<PowerSeoCompanion>(),
-                    SeoAuthoringProvider.Yoast when yoastBaseUrl is not null => p.GetRequiredService<YoastCompanion>(),
-                    _ => (ISeoCompanion?)null,
-                };
+                    // Basic analysis stays available whatever goes wrong while choosing or resolving a provider
+                    // (selection source down, HTTP timeout, missing IJSRuntime); an uncertain choice must never
+                    // send draft text to an external service. Only the caller's own cancellation propagates.
+                    return null;
+                }
             }));
         return services;
     }

@@ -37,7 +37,7 @@ an external service when the choice is unknown.
 - `SeoAuthoringSession`: per-editor state. Debounces checks by 750 ms, cancels superseded checks and marks
   results outdated when the draft changes.
 - `SeoAuthoringPanel`: the Blazor component that renders a `SeoAuthoringPanelViewModel` (search snippet preview and
-  suggestions). Styles are scoped to the component.
+  suggestions). Styles are scoped to the component and themed with CSS variables (see below).
 
 ### Edit-target keys
 
@@ -59,12 +59,13 @@ public sealed class MyDraftBuilder(IMyRenderer renderer) : ISeoDraftDocumentBuil
 {
     public SeoDocumentInput Build(SeoAuthoringDraft draft) => new(
         renderer.RenderPublicHtml(draft.BodyHtml), draft.SeoTitle ?? draft.Title, draft.MetaDescription ?? "",
-        draft.CanonicalUrl.AbsoluteUri, draft.Slug, Locale: draft.Locale, Purpose: draft.Purpose);
+        draft.CanonicalUrl?.AbsoluteUri ?? "", draft.Slug, Locale: draft.Locale, Purpose: draft.Purpose);
 }
 
 services.AddSingleton<ISeoDraftDocumentBuilder, MyDraftBuilder>(); // before AddSeoAuthoring, or replace after
 ```
 
+`CanonicalUrl` is optional: when `null` the snippet shows no address and the analyzer receives no canonical URL.
 Use `CanonicalUrl.AbsoluteUri` (not `ToString()`) so percent-encoded paths stay encoded.
 
 ## Wiring a session into an editor
@@ -94,9 +95,29 @@ Use `CanonicalUrl.AbsoluteUri` (not `ToString()`) so percent-encoded paths stay 
 Call `_session.Invalidate(false)` when the draft changes but you are not re-checking yet (results are marked
 outdated), or `Invalidate(true)` to clear them.
 
+## Theming
+
+The panel is light by default and does not follow `prefers-color-scheme`, so it stays readable in a light-only admin.
+To opt into a dark look, set these custom properties on the panel or any ancestor (for example your admin's dark-theme
+selector):
+
+```css
+.admin-dark {
+    --seo-panel-bg: #1b2230;
+    --seo-panel-fg: #e6eaf2;
+    --seo-panel-border: #3a4358;
+    --seo-snippet-bg: #232c3f;
+    --seo-snippet-fg: #e6eaf2;
+    --seo-snippet-accent: #7da2ee;
+}
+```
+
+Defaults: `--seo-panel-bg #fff`, `--seo-panel-fg #1d2433`, `--seo-panel-border #d8dfeb`, `--seo-snippet-bg #f4f7fc`,
+`--seo-snippet-fg` (the panel foreground), `--seo-snippet-accent #2455b5`.
+
 ## Privacy
 
-`PowerSeo` runs in-process. `Yoast` sends the draft text (title, description, body) to the service at
+`PowerSeo` runs in the editor's browser through JS interop; no third-party service is involved. `Yoast` sends the draft text (title, description, body) to the service at
 `YoastBaseUrl`. Point it only at a service you operate, and prefer an internal network address. Selection is
 fail-closed: an unknown or failing `ISeoProviderSelector` result means no text leaves your process. Only editorial
 English drafts are ever sent to a companion.

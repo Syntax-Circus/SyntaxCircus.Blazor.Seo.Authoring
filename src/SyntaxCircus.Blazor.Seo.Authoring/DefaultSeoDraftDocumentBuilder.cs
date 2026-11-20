@@ -15,13 +15,13 @@ public sealed class DefaultSeoDraftDocumentBuilder : ISeoDraftDocumentBuilder
         var html = draft.BodyHtml.Contains("<h1", StringComparison.OrdinalIgnoreCase)
             ? draft.BodyHtml
             : "<h1>" + HtmlEncoder.Default.Encode(draft.Title) + "</h1>" + draft.BodyHtml;
-        return new SeoDocumentInput(html, SearchTitle(draft), draft.MetaDescription ?? "", CanonicalUrlText(draft),
+        return new SeoDocumentInput(html, SearchTitle(draft), draft.MetaDescription ?? "", CanonicalUrlText(draft) ?? "",
             draft.Slug, Locale: draft.Locale, Purpose: draft.Purpose);
     }
 
-    /// <summary>Absolute URIs keep their escaped form (<c>/a%20b</c>), unlike <see cref="Uri.ToString"/>.</summary>
-    internal static string CanonicalUrlText(SeoAuthoringDraft draft)
-        => draft.CanonicalUrl.IsAbsoluteUri ? draft.CanonicalUrl.AbsoluteUri : draft.CanonicalUrl.OriginalString;
+    /// <summary>A missing canonical URL yields <c>null</c>. Absolute URIs keep their escaped form (<c>/a%20b</c>), unlike <see cref="Uri.ToString"/>.</summary>
+    internal static string? CanonicalUrlText(SeoAuthoringDraft draft)
+        => draft.CanonicalUrl is null ? null : draft.CanonicalUrl.IsAbsoluteUri ? draft.CanonicalUrl.AbsoluteUri : draft.CanonicalUrl.OriginalString;
 
     internal static string SearchTitle(SeoAuthoringDraft draft)
         => string.IsNullOrWhiteSpace(draft.SeoTitle) ? draft.Title : draft.SeoTitle;
